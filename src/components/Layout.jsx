@@ -1,4 +1,4 @@
-import { Car, CreditCard, Gauge, Home, Landmark, LogOut, PiggyBank, ReceiptText, Target, WalletCards } from 'lucide-react';
+import { Car, CreditCard, Gauge, Home, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Target, WalletCards } from 'lucide-react';
 
 const nav = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -9,6 +9,7 @@ const nav = [
   { id: 'goals', label: 'Goals', icon: Target },
   { id: 'transactions', label: 'Ledger', icon: CreditCard },
   { id: 'reports', label: 'Reports', icon: Gauge },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Layout({ user, activePage, setActivePage, logout, children }) {
