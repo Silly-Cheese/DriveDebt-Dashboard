@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Banknote, Landmark, PiggyBank } from 'lucide-react';
-import { saveKnownRecord } from '../lib/firestoreService';
+import { ArrowRightLeft, Banknote, Landmark, PiggyBank } from 'lucide-react';
+import { createRecord, saveKnownRecord, transferBetweenAccounts } from '../lib/firestoreService';
+import { exportJson, exportTransactionsCsv } from '../lib/exportData';
 import { formatMoney, toNumber } from '../lib/money';
 
 const accountDetails = {
@@ -27,6 +28,16 @@ function AccountEditor({ uid, account }) {
     event.preventDefault();
     setSaving(true);
     try {
+      await createRecord(uid, 'transactions', {
+        date: new Date().toISOString().slice(0, 10),
+        type: 'adjustment',
+        accountId: account.id,
+        category: 'Balance Adjustment',
+        description: `${details.title} manual balance adjustment`,
+        amount: toNumber(balance) - toNumber(account.balance),
+        balanceBefore: toNumber(account.balance),
+        balanceAfter: toNumber(balance),
+      });
       await saveKnownRecord(uid, 'accounts', account.id, {
         name: details.title,
         type: account.id,
@@ -65,6 +76,41 @@ function AccountEditor({ uid, account }) {
   );
 }
 
+function TransferTool({ uid, checking, savings }) {
+  const [direction, setDirection] = useState('checking-to-savings');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('Transfer between accounts');
+  const [saving, setSaving] = useState(false);
+
+  async function submit(event) {
+    event.preventDefault();
+    const from = direction === 'checking-to-savings' ? checking : savings;
+    const to = direction === 'checking-to-savings' ? savings : checking;
+    setSaving(true);
+    try {
+      await transferBetweenAccounts(uid, from, to, toNumber(amount), note);
+      setAmount('');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form className="panel" onSubmit={submit}>
+      <div className="account-heading">
+        <div className="brand-mark"><ArrowRightLeft size={22} /></div>
+        <div><h3>Transfer Money</h3><p className="muted">Move money between Checking and Savings with a matching ledger record.</p></div>
+      </div>
+      <div className="form-grid">
+        <label><span>Direction</span><select value={direction} onChange={(e) => setDirection(e.target.value)}><option value="checking-to-savings">Checking to Savings</option><option value="savings-to-checking">Savings to Checking</option></select></label>
+        <label><span>Amount</span><input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required /></label>
+        <label><span>Note</span><input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      </div>
+      <button className="primary-button" disabled={saving}>{saving ? 'Transferring...' : 'Record Transfer'}</button>
+    </form>
+  );
+}
+
 export default function AccountsPage({ uid, data }) {
   const checking = data.accounts.find((account) => account.id === 'checking') || { id: 'checking', name: 'Checking', balance: 0 };
   const savings = data.accounts.find((account) => account.id === 'savings') || { id: 'savings', name: 'Savings', balance: 0 };
@@ -96,6 +142,13 @@ export default function AccountsPage({ uid, data }) {
       <div className="two-column">
         <AccountEditor uid={uid} account={checking} />
         <AccountEditor uid={uid} account={savings} />
+      </div>
+
+      <TransferTool uid={uid} checking={checking} savings={savings} />
+
+      <div className="panel button-row">
+        <button className="secondary-button" onClick={() => exportJson(data)}>Export Full Backup</button>
+        <button className="secondary-button" onClick={() => exportTransactionsCsv(data.transactions)}>Export Transactions CSV</button>
       </div>
     </section>
   );
