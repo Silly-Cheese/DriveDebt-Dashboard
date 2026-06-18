@@ -1,11 +1,11 @@
-import { Car, CreditCard, Gauge, Goal, Home, LogOut, PiggyBank, ReceiptText, WalletCards } from 'lucide-react';
+import { Car, CreditCard, Gauge, Home, LogOut, PiggyBank, ReceiptText, Target, WalletCards } from 'lucide-react';
 
 const nav = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'paychecks', label: 'Paychecks', icon: WalletCards },
   { id: 'bills', label: 'Bills', icon: ReceiptText },
   { id: 'car', label: 'Car Payoff', icon: Car },
-  { id: 'goals', label: 'Goals', icon: Goal },
+  { id: 'goals', label: 'Goals', icon: Target },
   { id: 'transactions', label: 'Ledger', icon: CreditCard },
   { id: 'reports', label: 'Reports', icon: Gauge },
 ];
