@@ -9,6 +9,7 @@ import CarPayoffPage from './pages/CarPayoffPage';
 import GoalsPage from './pages/GoalsPage';
 import TransactionsPage from './pages/TransactionsPage';
 import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './hooks/useAuth';
 import { useFinanceData } from './hooks/useFinanceData';
 
@@ -31,6 +32,7 @@ export default function App() {
     goals: <GoalsPage {...props} />,
     transactions: <TransactionsPage {...props} />,
     reports: <ReportsPage data={data} />,
+    settings: <SettingsPage {...props} />,
   };
 
   return (
