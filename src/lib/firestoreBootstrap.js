@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '0.2.0';
 
 const defaultUserProfile = (user) => ({
   uid: user.uid,
@@ -22,7 +22,7 @@ const defaultSettings = {
   currency: 'USD',
   budgetingMode: 'paycheck-based',
   incomeMode: 'variable',
-  safeToSpendMethod: 'cash-minus-upcoming-obligations',
+  safeToSpendMethod: 'checking-minus-upcoming-obligations',
   carPayoffStrategy: 'extra-after-required-bills',
   emergencyFundTarget: 1000,
   createdAt: serverTimestamp(),
@@ -35,7 +35,11 @@ const starterAccounts = [
     name: 'Checking',
     type: 'checking',
     balance: 0,
+    startingBalance: 0,
+    institution: '',
     includeInSafeToSpend: true,
+    isPrimarySpendingAccount: true,
+    sortOrder: 1,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   },
@@ -44,16 +48,11 @@ const starterAccounts = [
     name: 'Savings',
     type: 'savings',
     balance: 0,
+    startingBalance: 0,
+    institution: '',
     includeInSafeToSpend: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  },
-  {
-    id: 'cash',
-    name: 'Cash',
-    type: 'cash',
-    balance: 0,
-    includeInSafeToSpend: true,
+    isPrimarySpendingAccount: false,
+    sortOrder: 2,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   },
@@ -109,6 +108,12 @@ const collectionMarker = (name) => ({
   updatedAt: serverTimestamp(),
 });
 
+async function ensureCoreAccounts(user, batch) {
+  starterAccounts.forEach((account) => {
+    batch.set(doc(db, 'users', user.uid, 'accounts', account.id), account, { merge: true });
+  });
+}
+
 export async function ensureUserDatabase(user) {
   if (!user?.uid) throw new Error('Cannot initialize database without an authenticated user.');
 
@@ -118,13 +123,15 @@ export async function ensureUserDatabase(user) {
   const carLoanRef = doc(db, 'users', user.uid, 'carLoan', 'main');
   const bootstrapRef = doc(db, 'users', user.uid, '_system', 'bootstrap');
 
+  const batch = writeBatch(db);
+  await ensureCoreAccounts(user, batch);
+
   const bootstrapSnap = await getDoc(bootstrapRef);
   if (bootstrapSnap.exists()) {
-    await setDoc(bootstrapRef, { lastCheckedAt: serverTimestamp(), appVersion: APP_VERSION }, { merge: true });
+    batch.set(bootstrapRef, { lastCheckedAt: serverTimestamp(), appVersion: APP_VERSION }, { merge: true });
+    await batch.commit();
     return { created: false };
   }
-
-  const batch = writeBatch(db);
 
   batch.set(userRef, {
     uid: user.uid,
@@ -136,10 +143,6 @@ export async function ensureUserDatabase(user) {
   batch.set(profileRef, defaultUserProfile(user), { merge: true });
   batch.set(settingsRef, defaultSettings, { merge: true });
   batch.set(carLoanRef, starterCarLoan, { merge: true });
-
-  starterAccounts.forEach((account) => {
-    batch.set(doc(db, 'users', user.uid, 'accounts', account.id), account, { merge: true });
-  });
 
   starterBudgetRules.forEach((rule) => {
     batch.set(doc(db, 'users', user.uid, 'budgetRules', rule.id), {
