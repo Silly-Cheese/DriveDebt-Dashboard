@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import AccountsPage from './pages/AccountsPage';
 import PaychecksPage from './pages/PaychecksPage';
 import BillsPage from './pages/BillsPage';
 import CarPayoffPage from './pages/CarPayoffPage';
@@ -23,6 +24,7 @@ export default function App() {
   const props = { uid: user.uid, data };
   const pages = {
     dashboard: <DashboardPage data={data} />,
+    accounts: <AccountsPage {...props} />,
     paychecks: <PaychecksPage {...props} />,
     bills: <BillsPage {...props} />,
     car: <CarPayoffPage {...props} />,
