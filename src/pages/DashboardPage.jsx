@@ -1,12 +1,15 @@
 import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
-import { formatMoney, percent } from '../lib/money';
+import { formatMoney, percent, toNumber } from '../lib/money';
 import { getCarProgress, getIncomeStats, getSafeToSpend, suggestPaycheckPlan } from '../lib/calculations';
 
 export default function DashboardPage({ data }) {
   const safe = getSafeToSpend(data);
   const income = getIncomeStats(data.paychecks);
   const carProgress = getCarProgress(data.carLoan);
+  const checking = data.accounts.find((account) => account.id === 'checking') || { balance: 0 };
+  const savings = data.accounts.find((account) => account.id === 'savings') || { balance: 0 };
+  const totalAccounts = toNumber(checking.balance) + toNumber(savings.balance);
   const suggested = suggestPaycheckPlan({
     paycheckAmount: income.lowest || income.average,
     bills: data.bills,
@@ -25,9 +28,16 @@ export default function DashboardPage({ data }) {
       </header>
 
       <div className="stat-grid">
-        <StatCard label="Available Cash" value={formatMoney(safe.cash)} hint="Checking + cash accounts" />
-        <StatCard label="Safe To Spend" value={formatMoney(safe.safeToSpend)} hint="After bills, car reserve, and priority goals" tone={safe.pressure} />
+        <StatCard label="Checking" value={formatMoney(checking.balance)} hint="Used for Safe To Spend" />
+        <StatCard label="Savings" value={formatMoney(savings.balance)} hint="Protected money" tone="stable" />
+        <StatCard label="Safe To Spend" value={formatMoney(safe.safeToSpend)} hint="Checking after obligations" tone={safe.pressure} />
+        <StatCard label="Total Accounts" value={formatMoney(totalAccounts)} hint="Checking + Savings" />
+      </div>
+
+      <div className="stat-grid">
         <StatCard label="30-Day Income" value={formatMoney(income.last30)} hint="Received paychecks only" />
+        <StatCard label="90-Day Income" value={formatMoney(income.last90)} hint="Rolling income window" />
+        <StatCard label="Average Paycheck" value={formatMoney(income.average)} hint={`Lowest: ${formatMoney(income.lowest)}`} />
         <StatCard label="Income Volatility" value={percent(income.volatility)} hint="Higher means less predictable" />
       </div>
 
