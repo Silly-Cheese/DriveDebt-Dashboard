@@ -1,7 +1,8 @@
-import { Car, CreditCard, Gauge, Home, LogOut, PiggyBank, ReceiptText, Target, WalletCards } from 'lucide-react';
+import { Car, CreditCard, Gauge, Home, Landmark, LogOut, PiggyBank, ReceiptText, Target, WalletCards } from 'lucide-react';
 
 const nav = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
+  { id: 'accounts', label: 'Accounts', icon: Landmark },
   { id: 'paychecks', label: 'Paychecks', icon: WalletCards },
   { id: 'bills', label: 'Bills', icon: ReceiptText },
   { id: 'car', label: 'Car Payoff', icon: Car },
