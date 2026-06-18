@@ -13,11 +13,11 @@ import { useFinanceData } from './hooks/useFinanceData';
 
 export default function App() {
   const [activePage, setActivePage] = useState('dashboard');
-  const { user, loading, error, login, logout } = useAuth();
+  const { user, loading, error, login, loginWithRedirect, logout } = useAuth();
   const data = useFinanceData(user?.uid);
 
   if (loading) return <div className="loading-screen">Loading DriveDebt...</div>;
-  if (!user) return <LoginPage login={login} error={error} />;
+  if (!user) return <LoginPage login={login} loginWithRedirect={loginWithRedirect} error={error} />;
   if (data.loading) return <div className="loading-screen">Preparing your finance command center...</div>;
 
   const props = { uid: user.uid, data };
