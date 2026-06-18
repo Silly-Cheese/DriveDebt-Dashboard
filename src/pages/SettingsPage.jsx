@@ -1,0 +1,56 @@
+import { useState } from 'react';
+import { saveKnownRecord } from '../lib/firestoreService';
+import { exportJson, exportTransactionsCsv } from '../lib/exportData';
+import { toNumber } from '../lib/money';
+
+export default function SettingsPage({ uid, data }) {
+  const [emergencyFundTarget, setEmergencyFundTarget] = useState('1000');
+  const [defaultCarPercent, setDefaultCarPercent] = useState('25');
+  const [defaultGoalPercent, setDefaultGoalPercent] = useState('10');
+  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState('60');
+  const [saved, setSaved] = useState(false);
+
+  async function saveSettings(event) {
+    event.preventDefault();
+    await saveKnownRecord(uid, 'settings', 'main', {
+      emergencyFundTarget: toNumber(emergencyFundTarget),
+      defaultCarPercent: toNumber(defaultCarPercent),
+      defaultGoalPercent: toNumber(defaultGoalPercent),
+      sessionTimeoutMinutes: toNumber(sessionTimeoutMinutes),
+      ownerEmail: 'christophershelley257@gmail.com',
+      currency: 'USD',
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  }
+
+  return (
+    <section className="page-stack">
+      <header className="page-header"><div><p className="eyebrow">Settings</p><h2>Dashboard Settings</h2></div></header>
+      <form className="panel" onSubmit={saveSettings}>
+        <h3>Planning Defaults</h3>
+        <div className="form-grid">
+          <label><span>Emergency Fund Target</span><input type="number" step="0.01" value={emergencyFundTarget} onChange={(e) => setEmergencyFundTarget(e.target.value)} /></label>
+          <label><span>Default Car Payoff %</span><input type="number" step="1" value={defaultCarPercent} onChange={(e) => setDefaultCarPercent(e.target.value)} /></label>
+          <label><span>Default Goal Funding %</span><input type="number" step="1" value={defaultGoalPercent} onChange={(e) => setDefaultGoalPercent(e.target.value)} /></label>
+          <label><span>Session Timeout Minutes</span><input type="number" step="1" value={sessionTimeoutMinutes} onChange={(e) => setSessionTimeoutMinutes(e.target.value)} /></label>
+        </div>
+        <button className="primary-button">Save Settings</button>
+        {saved && <p className="success-note">Settings saved.</p>}
+      </form>
+      <div className="panel">
+        <h3>Security</h3>
+        <p className="muted">This app is locked to the owner email and Firestore security rules also restrict data to the signed-in owner UID.</p>
+        <div className="security-list">
+          <span>Owner Email: christophershelley257@gmail.com</span>
+          <span>Authentication: Google Firebase Auth</span>
+          <span>Database: Owner-only Firestore path</span>
+        </div>
+      </div>
+      <div className="panel button-row">
+        <button className="secondary-button" onClick={() => exportJson(data)}>Download Full JSON Backup</button>
+        <button className="secondary-button" onClick={() => exportTransactionsCsv(data.transactions)}>Download Transaction CSV</button>
+      </div>
+    </section>
+  );
+}
