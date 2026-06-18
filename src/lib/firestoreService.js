@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -60,4 +61,55 @@ export async function updateRecord(uid, collectionName, id, data) {
 
 export async function deleteRecord(uid, collectionName, id) {
   return deleteDoc(userDoc(uid, collectionName, id));
+}
+
+export async function writeTransactionAndAccount(uid, transaction, account, newBalance) {
+  const batch = writeBatch(db);
+  const transactionRef = doc(userCollection(uid, 'transactions'));
+  batch.set(transactionRef, {
+    ...transaction,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  batch.set(userDoc(uid, 'accounts', account.id), {
+    balance: newBalance,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+  await batch.commit();
+  return transactionRef;
+}
+
+export async function transferBetweenAccounts(uid, fromAccount, toAccount, amount, description = 'Transfer') {
+  const batch = writeBatch(db);
+  const transferId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+  const now = serverTimestamp();
+  const fromBalance = Number(fromAccount.balance || 0) - Number(amount || 0);
+  const toBalance = Number(toAccount.balance || 0) + Number(amount || 0);
+
+  batch.set(userDoc(uid, 'accounts', fromAccount.id), { balance: fromBalance, updatedAt: now }, { merge: true });
+  batch.set(userDoc(uid, 'accounts', toAccount.id), { balance: toBalance, updatedAt: now }, { merge: true });
+  batch.set(doc(userCollection(uid, 'transactions')), {
+    date: new Date().toISOString().slice(0, 10),
+    type: 'transfer-out',
+    category: 'Transfer',
+    description,
+    amount: Number(amount || 0),
+    accountId: fromAccount.id,
+    transferId,
+    createdAt: now,
+    updatedAt: now,
+  });
+  batch.set(doc(userCollection(uid, 'transactions')), {
+    date: new Date().toISOString().slice(0, 10),
+    type: 'transfer-in',
+    category: 'Transfer',
+    description,
+    amount: Number(amount || 0),
+    accountId: toAccount.id,
+    transferId,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  await batch.commit();
 }
