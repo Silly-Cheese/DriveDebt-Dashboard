@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.2.1';
 
 const defaultUserProfile = (user) => ({
   uid: user.uid,
@@ -108,10 +108,28 @@ const collectionMarker = (name) => ({
   updatedAt: serverTimestamp(),
 });
 
+function accountMetadata(account) {
+  return {
+    name: account.name,
+    type: account.type,
+    includeInSafeToSpend: account.includeInSafeToSpend,
+    isPrimarySpendingAccount: account.isPrimarySpendingAccount,
+    sortOrder: account.sortOrder,
+    updatedAt: serverTimestamp(),
+  };
+}
+
 async function ensureCoreAccounts(user, batch) {
-  starterAccounts.forEach((account) => {
-    batch.set(doc(db, 'users', user.uid, 'accounts', account.id), account, { merge: true });
-  });
+  for (const account of starterAccounts) {
+    const accountRef = doc(db, 'users', user.uid, 'accounts', account.id);
+    const accountSnap = await getDoc(accountRef);
+
+    if (accountSnap.exists()) {
+      batch.set(accountRef, accountMetadata(account), { merge: true });
+    } else {
+      batch.set(accountRef, account, { merge: true });
+    }
+  }
 }
 
 export async function ensureUserDatabase(user) {
