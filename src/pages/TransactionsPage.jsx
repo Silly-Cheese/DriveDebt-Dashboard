@@ -1,5 +1,7 @@
+import { useMemo, useState } from 'react';
 import MoneyForm from '../components/MoneyForm';
-import { createRecord, saveKnownRecord } from '../lib/firestoreService';
+import { createRecord, deleteRecord, saveKnownRecord } from '../lib/firestoreService';
+import { transactionCategories, transactionTypes } from '../lib/categories';
 import { formatMoney, toNumber } from '../lib/money';
 
 function applyTransactionToBalance(account, type, amount) {
@@ -10,6 +12,10 @@ function applyTransactionToBalance(account, type, amount) {
 }
 
 export default function TransactionsPage({ uid, data }) {
+  const [query, setQuery] = useState('');
+  const [accountFilter, setAccountFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+
   async function addTransaction(form) {
     const amount = toNumber(form.amount);
     const account = data.accounts.find((item) => item.id === form.accountId);
@@ -31,6 +37,13 @@ export default function TransactionsPage({ uid, data }) {
     }
   }
 
+  const filtered = useMemo(() => data.transactions.filter((transaction) => {
+    const matchesSearch = !query || `${transaction.description} ${transaction.category}`.toLowerCase().includes(query.toLowerCase());
+    const matchesAccount = accountFilter === 'all' || transaction.accountId === accountFilter;
+    const matchesType = typeFilter === 'all' || transaction.type === typeFilter;
+    return matchesSearch && matchesAccount && matchesType;
+  }), [data.transactions, query, accountFilter, typeFilter]);
+
   return (
     <section className="page-stack">
       <header className="page-header"><div><p className="eyebrow">Ledger</p><h2>Transactions</h2></div></header>
@@ -38,17 +51,19 @@ export default function TransactionsPage({ uid, data }) {
         { name: 'date', label: 'Date', type: 'date' },
         { name: 'description', label: 'Description' },
         { name: 'amount', label: 'Amount', type: 'number', step: '0.01' },
-        { name: 'category', label: 'Category' },
+        { name: 'category', label: 'Category', value: 'Other', options: transactionCategories.map((c) => ({ value: c, label: c })) },
         { name: 'accountId', label: 'Account', value: 'checking', options: data.accounts.map((a) => ({ value: a.id, label: a.name })) },
-        { name: 'type', label: 'Type', value: 'expense', options: [
-          { value: 'income', label: 'Income' },
-          { value: 'expense', label: 'Expense' },
-          { value: 'transfer', label: 'Transfer' },
-          { value: 'car-payment', label: 'Car Payment' },
-          { value: 'goal-contribution', label: 'Goal Contribution' },
-        ]},
+        { name: 'type', label: 'Type', value: 'expense', options: transactionTypes },
       ]} />
-      <div className="panel"><h3>Recent Transactions</h3>{data.transactions.length === 0 ? <p className="muted">No transactions yet.</p> : data.transactions.map((t) => <div className="row" key={t.id}><span>{t.date} • {t.description} • {t.category} • {t.accountId}</span><strong>{formatMoney(t.amount)}</strong></div>)}</div>
+      <div className="panel">
+        <h3>Filters</h3>
+        <div className="form-grid">
+          <label><span>Search</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search description/category" /></label>
+          <label><span>Account</span><select value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)}><option value="all">All Accounts</option>{data.accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
+          <label><span>Type</span><select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}><option value="all">All Types</option>{transactionTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
+        </div>
+      </div>
+      <div className="panel"><h3>Recent Transactions</h3>{filtered.length === 0 ? <p className="muted">No matching transactions.</p> : filtered.map((t) => <div className={`row transaction-row ${t.type}`} key={t.id}><span>{t.date} • {t.description} • {t.category} • {t.accountId}</span><strong>{formatMoney(t.amount)}</strong><button className="mini-button danger-button" onClick={() => deleteRecord(uid, 'transactions', t.id)}>Delete</button></div>)}</div>
     </section>
   );
 }
