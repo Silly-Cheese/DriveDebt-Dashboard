@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import MoneyForm from '../components/MoneyForm';
 import ProgressBar from '../components/ProgressBar';
-import { createRecord, saveKnownRecord } from '../lib/firestoreService';
+import { createRecord, deleteRecord, saveKnownRecord } from '../lib/firestoreService';
 import { estimateCarPayoffMonths, getCarProgress } from '../lib/calculations';
 import { formatMoney, toNumber } from '../lib/money';
 
 export default function CarPayoffPage({ uid, data }) {
   const car = data.carLoan || {};
+  const [extraAmount, setExtraAmount] = useState('50');
   const progress = getCarProgress(car);
   const payoffMonths = estimateCarPayoffMonths(car, 0);
-  const payoffWithExtra = estimateCarPayoffMonths(car, 50);
+  const payoffWithExtra = estimateCarPayoffMonths(car, toNumber(extraAmount));
 
   async function saveLoan(form) {
     await saveKnownRecord(uid, 'carLoan', 'main', {
@@ -32,6 +34,14 @@ export default function CarPayoffPage({ uid, data }) {
       notes: form.notes || '',
       balanceAfterPayment: newBalance,
     });
+    await createRecord(uid, 'transactions', {
+      date: form.paymentDate,
+      type: 'car-payment',
+      category: 'Car Payment',
+      description: form.notes || 'Car payment',
+      amount,
+      accountId: 'checking',
+    });
     await saveKnownRecord(uid, 'carLoan', 'main', { currentBalance: newBalance });
   }
 
@@ -42,9 +52,16 @@ export default function CarPayoffPage({ uid, data }) {
         <div className="stat-card"><p>Current Balance</p><strong>{formatMoney(car.currentBalance)}</strong><span>{car.lenderName || 'No lender set'}</span></div>
         <div className="stat-card"><p>Minimum Payment</p><strong>{formatMoney(car.minimumPayment)}</strong><span>Due day: {car.dueDay || 'not set'}</span></div>
         <div className="stat-card"><p>Payoff Estimate</p><strong>{payoffMonths ? `${payoffMonths} mo.` : 'N/A'}</strong><span>At minimum payment</span></div>
-        <div className="stat-card stable"><p>With $50 Extra</p><strong>{payoffWithExtra ? `${payoffWithExtra} mo.` : 'N/A'}</strong><span>Simple projection</span></div>
+        <div className="stat-card stable"><p>With Extra</p><strong>{payoffWithExtra ? `${payoffWithExtra} mo.` : 'N/A'}</strong><span>{formatMoney(extraAmount)} extra monthly</span></div>
       </div>
-      <div className="panel"><h3>Payoff Progress</h3><ProgressBar value={progress} /></div>
+      <div className="two-column">
+        <div className="panel"><h3>Payoff Progress</h3><ProgressBar value={progress} /></div>
+        <div className="panel">
+          <h3>Extra Payment Simulator</h3>
+          <label><span>Extra Monthly Payment</span><input type="number" step="0.01" value={extraAmount} onChange={(e) => setExtraAmount(e.target.value)} /></label>
+          <p className="muted">This estimates how many months remain if you add this amount on top of the minimum payment.</p>
+        </div>
+      </div>
       <div className="two-column">
         <MoneyForm title="Car Loan Settings" buttonText="Save Loan" onSave={saveLoan} fields={[
           { name: 'lenderName', label: 'Lender Name', value: car.lenderName || '' },
@@ -62,7 +79,7 @@ export default function CarPayoffPage({ uid, data }) {
           { name: 'notes', label: 'Notes' },
         ]} />
       </div>
-      <div className="panel"><h3>Payment History</h3>{data.carPayments.length === 0 ? <p className="muted">No car payments logged.</p> : data.carPayments.map((p) => <div className="row" key={p.id}><span>{p.paymentDate} • {p.notes}</span><strong>{formatMoney(p.amount)}</strong></div>)}</div>
+      <div className="panel"><h3>Payment History</h3>{data.carPayments.length === 0 ? <p className="muted">No car payments logged.</p> : data.carPayments.map((p) => <div className="row" key={p.id}><span>{p.paymentDate} • {p.notes}</span><strong>{formatMoney(p.amount)}</strong><button className="mini-button danger-button" onClick={() => deleteRecord(uid, 'carPayments', p.id)}>Delete</button></div>)}</div>
     </section>
   );
 }
