@@ -1,15 +1,10 @@
 import { useMemo, useState } from 'react';
 import MoneyForm from '../components/MoneyForm';
-import { createRecord, deleteRecord, saveKnownRecord } from '../lib/firestoreService';
+import SafeActionButton from '../components/SafeActionButton';
+import { deleteRecord } from '../lib/firestoreService';
+import { addExpense, addIncome } from '../lib/moneyEngine';
 import { transactionCategories, transactionTypes } from '../lib/categories';
 import { formatMoney, toNumber } from '../lib/money';
-
-function applyTransactionToBalance(account, type, amount) {
-  const current = toNumber(account?.balance);
-  if (type === 'income') return current + amount;
-  if (type === 'expense' || type === 'car-payment' || type === 'goal-contribution') return current - amount;
-  return current;
-}
 
 export default function TransactionsPage({ uid, data }) {
   const [query, setQuery] = useState('');
@@ -18,21 +13,22 @@ export default function TransactionsPage({ uid, data }) {
 
   async function addTransaction(form) {
     const amount = toNumber(form.amount);
-    const account = data.accounts.find((item) => item.id === form.accountId);
-
-    await createRecord(uid, 'transactions', {
-      date: form.date,
-      type: form.type,
-      category: form.category,
-      description: form.description,
-      amount,
-      accountId: form.accountId,
-      affectsBalance: form.type !== 'transfer',
-    });
-
-    if (account && form.type !== 'transfer') {
-      await saveKnownRecord(uid, 'accounts', account.id, {
-        balance: applyTransactionToBalance(account, form.type, amount),
+    if (form.type === 'income') {
+      await addIncome(uid, data, {
+        date: form.date,
+        amount,
+        accountId: form.accountId,
+        category: form.category,
+        description: form.description || 'Income',
+      });
+    } else {
+      await addExpense(uid, data, {
+        date: form.date,
+        amount,
+        accountId: form.accountId,
+        type: form.type,
+        category: form.category,
+        description: form.description || 'Expense',
       });
     }
   }
@@ -53,7 +49,7 @@ export default function TransactionsPage({ uid, data }) {
         { name: 'amount', label: 'Amount', type: 'number', step: '0.01' },
         { name: 'category', label: 'Category', value: 'Other', options: transactionCategories.map((c) => ({ value: c, label: c })) },
         { name: 'accountId', label: 'Account', value: 'checking', options: data.accounts.map((a) => ({ value: a.id, label: a.name })) },
-        { name: 'type', label: 'Type', value: 'expense', options: transactionTypes },
+        { name: 'type', label: 'Type', value: 'expense', options: transactionTypes.filter((t) => !['transfer', 'adjustment'].includes(t.value)) },
       ]} />
       <div className="panel">
         <h3>Filters</h3>
@@ -63,7 +59,7 @@ export default function TransactionsPage({ uid, data }) {
           <label><span>Type</span><select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}><option value="all">All Types</option>{transactionTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
         </div>
       </div>
-      <div className="panel"><h3>Recent Transactions</h3>{filtered.length === 0 ? <p className="muted">No matching transactions.</p> : filtered.map((t) => <div className={`row transaction-row ${t.type}`} key={t.id}><span>{t.date} • {t.description} • {t.category} • {t.accountId}</span><strong>{formatMoney(t.amount)}</strong><button className="mini-button danger-button" onClick={() => deleteRecord(uid, 'transactions', t.id)}>Delete</button></div>)}</div>
+      <div className="panel"><h3>Recent Transactions</h3>{filtered.length === 0 ? <p className="muted">No matching transactions. Use Quick Add or add a transaction here to start building your ledger.</p> : filtered.map((t) => <div className={`row transaction-row ${t.type}`} key={t.id}><span>{t.date} • {t.description} • {t.category} • {t.accountId}</span><strong>{formatMoney(t.amount)}</strong><SafeActionButton promptText="Delete this transaction? This does not automatically reverse the account balance." onAction={() => deleteRecord(uid, 'transactions', t.id)}>Delete</SafeActionButton></div>)}</div>
     </section>
   );
 }
