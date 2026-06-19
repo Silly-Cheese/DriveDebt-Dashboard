@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AccountsPage from './pages/AccountsPage';
 import PaychecksPage from './pages/PaychecksPage';
+import BudgetPage from './pages/BudgetPage';
 import BillsPage from './pages/BillsPage';
 import CarPayoffPage from './pages/CarPayoffPage';
 import GoalsPage from './pages/GoalsPage';
@@ -27,12 +28,13 @@ export default function App() {
     dashboard: <DashboardPage data={data} />,
     accounts: <AccountsPage {...props} />,
     paychecks: <PaychecksPage {...props} />,
+    budget: <BudgetPage {...props} />,
     bills: <BillsPage {...props} />,
     car: <CarPayoffPage {...props} />,
     goals: <GoalsPage {...props} />,
     transactions: <TransactionsPage {...props} />,
     reports: <ReportsPage data={data} />,
-    settings: <SettingsPage {...props} />,
+    settings: <SettingsPage {...props} user={user} />,
   };
 
   return (
