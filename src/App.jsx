@@ -28,7 +28,7 @@ export default function App() {
 
   const props = { uid: user.uid, data };
   const pages = {
-    dashboard: <DashboardPage data={data} />,
+    dashboard: <DashboardPage data={data} goToPage={setActivePage} />,
     accounts: <AccountsPage {...props} />,
     paychecks: <PaychecksPage {...props} />,
     budget: <BudgetPage {...props} />,
