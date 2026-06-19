@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import MoneyForm from '../components/MoneyForm';
 import ProgressBar from '../components/ProgressBar';
-import { createRecord, deleteRecord, saveKnownRecord } from '../lib/firestoreService';
+import SafeActionButton from '../components/SafeActionButton';
+import { deleteRecord, saveKnownRecord } from '../lib/firestoreService';
+import { payCar } from '../lib/moneyEngine';
 import { estimateCarPayoffMonths, getCarProgress } from '../lib/calculations';
 import { formatMoney, toNumber } from '../lib/money';
 
@@ -25,24 +27,13 @@ export default function CarPayoffPage({ uid, data }) {
   }
 
   async function addPayment(form) {
-    const amount = toNumber(form.amount);
-    const newBalance = Math.max(0, toNumber(car.currentBalance) - amount);
-    await createRecord(uid, 'carPayments', {
-      paymentDate: form.paymentDate,
-      amount,
-      extraAmount: toNumber(form.extraAmount),
-      notes: form.notes || '',
-      balanceAfterPayment: newBalance,
-    });
-    await createRecord(uid, 'transactions', {
+    await payCar(uid, data, {
       date: form.paymentDate,
-      type: 'car-payment',
-      category: 'Car Payment',
+      amount: toNumber(form.amount),
+      extraAmount: toNumber(form.extraAmount),
       description: form.notes || 'Car payment',
-      amount,
-      accountId: 'checking',
+      accountId: form.accountId || 'checking',
     });
-    await saveKnownRecord(uid, 'carLoan', 'main', { currentBalance: newBalance });
   }
 
   return (
@@ -76,10 +67,11 @@ export default function CarPayoffPage({ uid, data }) {
           { name: 'paymentDate', label: 'Payment Date', type: 'date' },
           { name: 'amount', label: 'Total Payment Amount', type: 'number', step: '0.01' },
           { name: 'extraAmount', label: 'Extra Principal Amount', type: 'number', step: '0.01', value: '0' },
+          { name: 'accountId', label: 'Paid From', value: 'checking', options: data.accounts.map((a) => ({ value: a.id, label: a.name })) },
           { name: 'notes', label: 'Notes' },
         ]} />
       </div>
-      <div className="panel"><h3>Payment History</h3>{data.carPayments.length === 0 ? <p className="muted">No car payments logged.</p> : data.carPayments.map((p) => <div className="row" key={p.id}><span>{p.paymentDate} • {p.notes}</span><strong>{formatMoney(p.amount)}</strong><button className="mini-button danger-button" onClick={() => deleteRecord(uid, 'carPayments', p.id)}>Delete</button></div>)}</div>
+      <div className="panel"><h3>Payment History</h3>{data.carPayments.length === 0 ? <p className="muted">No car payments logged. Add your first payment to track loan progress and reduce checking automatically.</p> : data.carPayments.map((p) => <div className="row" key={p.id}><span>{p.paymentDate} • {p.notes}</span><strong>{formatMoney(p.amount)}</strong><SafeActionButton promptText="Delete this car payment record? This does not automatically reverse the account or car balance." onAction={() => deleteRecord(uid, 'carPayments', p.id)}>Delete</SafeActionButton></div>)}</div>
     </section>
   );
 }
