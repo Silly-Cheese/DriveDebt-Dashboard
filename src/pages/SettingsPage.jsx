@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { saveKnownRecord } from '../lib/firestoreService';
 import { exportJson, exportTransactionsCsv } from '../lib/exportData';
+import { getLocalPin, isValidPin, setLocalPin } from '../lib/localSecurity';
 import { toNumber } from '../lib/money';
 
-export default function SettingsPage({ uid, data, user }) {
+export default function SettingsPage({ uid, data, user, reverifyOwner }) {
   const [emergencyFundTarget, setEmergencyFundTarget] = useState('1000');
   const [defaultCarPercent, setDefaultCarPercent] = useState('25');
   const [defaultGoalPercent, setDefaultGoalPercent] = useState('10');
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState('60');
+  const [currentPin, setCurrentPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [pinStatus, setPinStatus] = useState('');
   const [saved, setSaved] = useState(false);
 
   async function saveSettings(event) {
@@ -23,6 +27,28 @@ export default function SettingsPage({ uid, data, user }) {
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  }
+
+  async function changePin(event) {
+    event.preventDefault();
+    setPinStatus('');
+    if (currentPin !== getLocalPin()) {
+      setPinStatus('Current PIN is incorrect.');
+      return;
+    }
+    if (!isValidPin(newPin)) {
+      setPinStatus('New PIN must be 4 to 8 digits.');
+      return;
+    }
+    try {
+      await reverifyOwner();
+      setLocalPin(newPin);
+      setCurrentPin('');
+      setNewPin('');
+      setPinStatus('PIN changed after Google verification.');
+    } catch (err) {
+      setPinStatus(err.message || 'Google verification failed.');
+    }
   }
 
   async function copyUid() {
@@ -43,6 +69,18 @@ export default function SettingsPage({ uid, data, user }) {
         <button className="primary-button">Save Settings</button>
         {saved && <p className="success-note">Settings saved.</p>}
       </form>
+
+      <form className="panel" onSubmit={changePin}>
+        <h3>Change Lock PIN</h3>
+        <p className="muted">Changing the lock PIN requires your current PIN and a fresh Google verification popup.</p>
+        <div className="form-grid">
+          <label><span>Current PIN</span><input type="password" value={currentPin} onChange={(e) => setCurrentPin(e.target.value)} /></label>
+          <label><span>New PIN</span><input type="password" value={newPin} onChange={(e) => setNewPin(e.target.value)} placeholder="4 to 8 digits" /></label>
+        </div>
+        <button className="primary-button">Verify with Google & Change PIN</button>
+        {pinStatus && <p className="success-note">{pinStatus}</p>}
+      </form>
+
       <div className="panel">
         <h3>Security</h3>
         <p className="muted">This app is locked to the owner email. Your Firebase UID is shown here so the Firestore rules can be hardened to UID-only after confirming it.</p>
