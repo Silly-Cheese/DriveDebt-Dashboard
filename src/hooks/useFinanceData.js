@@ -10,6 +10,7 @@ export function useFinanceData(uid) {
     budgetRules: [],
     goals: [],
     carPayments: [],
+    activity: [],
     carLoan: null,
     loading: true,
   });
@@ -25,6 +26,7 @@ export function useFinanceData(uid) {
       subscribeToCollection(uid, 'budgetRules', (budgetRules) => setData((d) => ({ ...d, budgetRules })), 'priority'),
       subscribeToCollection(uid, 'goals', (goals) => setData((d) => ({ ...d, goals })), 'priority'),
       subscribeToCollection(uid, 'carPayments', (carPayments) => setData((d) => ({ ...d, carPayments })), 'paymentDate'),
+      subscribeToCollection(uid, 'activity', (activity) => setData((d) => ({ ...d, activity })), 'at'),
       subscribeToDoc(uid, 'carLoan', 'main', (carLoan) => setData((d) => ({ ...d, carLoan, loading: false }))),
     ];
 
