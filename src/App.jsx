@@ -18,7 +18,7 @@ import { useFinanceData } from './hooks/useFinanceData';
 export default function App() {
   const [activePage, setActivePage] = useState('dashboard');
   const [locked, setLocked] = useState(false);
-  const { user, loading, error, login, loginWithRedirect, logout } = useAuth();
+  const { user, loading, error, login, loginWithRedirect, reverifyOwner, logout } = useAuth();
   const data = useFinanceData(user?.uid);
 
   if (loading) return <div className="loading-screen">Loading DriveDebt...</div>;
@@ -37,7 +37,7 @@ export default function App() {
     goals: <GoalsPage {...props} />,
     transactions: <TransactionsPage {...props} />,
     reports: <ReportsPage data={data} />,
-    settings: <SettingsPage {...props} user={user} />,
+    settings: <SettingsPage {...props} user={user} reverifyOwner={reverifyOwner} />,
   };
 
   return (
