@@ -1,17 +1,41 @@
 import { Car, CreditCard, Gauge, Home, Landmark, Lock, LogOut, PiggyBank, ReceiptText, Settings, Target, WalletCards, Wallet } from 'lucide-react';
 
-const nav = [
+const coreNav = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'accounts', label: 'Accounts', icon: Landmark },
   { id: 'paychecks', label: 'Paychecks', icon: WalletCards },
   { id: 'budget', label: 'Budget', icon: Wallet },
   { id: 'bills', label: 'Bills', icon: ReceiptText },
   { id: 'car', label: 'Car Payoff', icon: Car },
+];
+
+const advancedNav = [
   { id: 'goals', label: 'Goals', icon: Target },
   { id: 'transactions', label: 'Ledger', icon: CreditCard },
   { id: 'reports', label: 'Reports', icon: Gauge },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
+
+function NavSection({ title, items, activePage, setActivePage }) {
+  return (
+    <div className="nav-section">
+      <p className="nav-heading">{title}</p>
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.id}
+            className={activePage === item.id ? 'nav-item active' : 'nav-item'}
+            onClick={() => setActivePage(item.id)}
+          >
+            <Icon size={18} />
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Layout({ user, activePage, setActivePage, logout, lockDashboard, children }) {
   return (
@@ -26,19 +50,8 @@ export default function Layout({ user, activePage, setActivePage, logout, lockDa
         </div>
 
         <nav className="nav-list">
-          {nav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                className={activePage === item.id ? 'nav-item active' : 'nav-item'}
-                onClick={() => setActivePage(item.id)}
-              >
-                <Icon size={18} />
-                {item.label}
-              </button>
-            );
-          })}
+          <NavSection title="Core" items={coreNav} activePage={activePage} setActivePage={setActivePage} />
+          <NavSection title="Advanced" items={advancedNav} activePage={activePage} setActivePage={setActivePage} />
         </nav>
 
         <div className="sidebar-footer">
