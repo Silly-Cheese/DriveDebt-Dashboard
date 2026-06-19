@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import MoneyForm from '../components/MoneyForm';
-import { createRecord, deleteRecord, saveKnownRecord } from '../lib/firestoreService';
+import SafeActionButton from '../components/SafeActionButton';
+import { createRecord, deleteRecord } from '../lib/firestoreService';
+import { addIncome } from '../lib/moneyEngine';
 import { suggestPaycheckPlan } from '../lib/calculations';
 import { formatMoney, toNumber } from '../lib/money';
 
@@ -52,18 +54,13 @@ export default function PaychecksPage({ uid, data }) {
     });
 
     if (form.status === 'received') {
-      const account = data.accounts.find((a) => a.id === form.accountId);
-      if (account) {
-        await saveKnownRecord(uid, 'accounts', account.id, { balance: toNumber(account.balance) + netAmount });
-        await createRecord(uid, 'transactions', {
-          date: form.payDate,
-          type: 'income',
-          category: 'Income',
-          description: `Paycheck from ${form.source}`,
-          amount: netAmount,
-          accountId: form.accountId,
-        });
-      }
+      await addIncome(uid, data, {
+        date: form.payDate,
+        amount: netAmount,
+        accountId: form.accountId,
+        description: `Paycheck from ${form.source}`,
+        category: 'Income',
+      });
     }
   }
 
@@ -93,11 +90,11 @@ export default function PaychecksPage({ uid, data }) {
       </div>
       <div className="panel">
         <h3>Paycheck History</h3>
-        {data.paychecks.length === 0 ? <p className="muted">No paychecks yet.</p> : data.paychecks.map((paycheck) => (
+        {data.paychecks.length === 0 ? <p className="muted">No paychecks yet. Add your first paycheck so DriveDebt can estimate income and build a safe plan.</p> : data.paychecks.map((paycheck) => (
           <div className="row" key={paycheck.id}>
             <span>{paycheck.payDate} • {paycheck.source} • {paycheck.status} • {paycheck.accountId || 'no account'}</span>
             <strong>{formatMoney(paycheck.netAmount)}</strong>
-            <button className="mini-button danger-button" onClick={() => deleteRecord(uid, 'paychecks', paycheck.id)}>Delete</button>
+            <SafeActionButton promptText="Delete this paycheck record? This does not automatically reverse the account deposit." onAction={() => deleteRecord(uid, 'paychecks', paycheck.id)}>Delete</SafeActionButton>
           </div>
         ))}
       </div>
