@@ -11,8 +11,6 @@ import {
 import { auth } from '../firebase';
 import { ensureUserDatabase } from '../lib/firestoreBootstrap';
 
-const ALLOWED_EMAIL = 'christophershelley257@gmail.com';
-
 function friendlyAuthError(err) {
   const code = err?.code || '';
   if (code === 'auth/popup-blocked') return 'The browser blocked the Google sign-in popup. Use the alternate sign-in option instead.';
@@ -33,14 +31,6 @@ export function useAuth() {
     return onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      if (firebaseUser.email !== ALLOWED_EMAIL) {
-        await signOut(auth);
-        setUser(null);
-        setError('This dashboard is locked to the owner account only. Sign in with christophershelley257@gmail.com.');
         setLoading(false);
         return;
       }
@@ -82,7 +72,7 @@ export function useAuth() {
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
       const result = await reauthenticateWithPopup(auth.currentUser, provider);
-      if (result.user.email !== ALLOWED_EMAIL) throw new Error('That Google account is not authorized for this dashboard.');
+      if (result.user.uid !== auth.currentUser.uid) throw new Error('That Google account does not match the current signed-in account.');
       return true;
     } catch (err) {
       throw new Error(friendlyAuthError(err));
