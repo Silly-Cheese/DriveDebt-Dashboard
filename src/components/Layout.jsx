@@ -1,4 +1,4 @@
-import { Car, CreditCard, Gauge, Home, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Target, WalletCards, Wallet } from 'lucide-react';
+import { Car, CreditCard, Gauge, Home, Landmark, Lock, LogOut, PiggyBank, ReceiptText, Settings, Target, WalletCards, Wallet } from 'lucide-react';
 
 const nav = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -13,7 +13,7 @@ const nav = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-export default function Layout({ user, activePage, setActivePage, logout, children }) {
+export default function Layout({ user, activePage, setActivePage, logout, lockDashboard, children }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -43,6 +43,7 @@ export default function Layout({ user, activePage, setActivePage, logout, childr
 
         <div className="sidebar-footer">
           <p>{user.email}</p>
+          <button className="ghost-button" onClick={lockDashboard}><Lock size={16} /> Lock</button>
           <button className="ghost-button" onClick={logout}><LogOut size={16} /> Sign out</button>
         </div>
       </aside>
