@@ -1,9 +1,10 @@
-import { Car, CreditCard, Gauge, Home, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Target, WalletCards } from 'lucide-react';
+import { Car, CreditCard, Gauge, Home, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Target, WalletCards, Wallet } from 'lucide-react';
 
 const nav = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'accounts', label: 'Accounts', icon: Landmark },
   { id: 'paychecks', label: 'Paychecks', icon: WalletCards },
+  { id: 'budget', label: 'Budget', icon: Wallet },
   { id: 'bills', label: 'Bills', icon: ReceiptText },
   { id: 'car', label: 'Car Payoff', icon: Car },
   { id: 'goals', label: 'Goals', icon: Target },
