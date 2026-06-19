@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Layout from './components/Layout';
+import LockScreen from './components/LockScreen';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AccountsPage from './pages/AccountsPage';
@@ -16,11 +17,13 @@ import { useFinanceData } from './hooks/useFinanceData';
 
 export default function App() {
   const [activePage, setActivePage] = useState('dashboard');
+  const [locked, setLocked] = useState(false);
   const { user, loading, error, login, loginWithRedirect, logout } = useAuth();
   const data = useFinanceData(user?.uid);
 
   if (loading) return <div className="loading-screen">Loading DriveDebt...</div>;
   if (!user) return <LoginPage login={login} loginWithRedirect={loginWithRedirect} error={error} />;
+  if (locked) return <LockScreen onUnlock={() => setLocked(false)} />;
   if (data.loading) return <div className="loading-screen">Preparing your finance command center...</div>;
 
   const props = { uid: user.uid, data };
@@ -38,7 +41,7 @@ export default function App() {
   };
 
   return (
-    <Layout user={user} activePage={activePage} setActivePage={setActivePage} logout={logout}>
+    <Layout user={user} activePage={activePage} setActivePage={setActivePage} logout={logout} lockDashboard={() => setLocked(true)}>
       {pages[activePage] || pages.dashboard}
     </Layout>
   );
