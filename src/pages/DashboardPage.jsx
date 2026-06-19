@@ -4,7 +4,7 @@ import { formatMoney, percent, toNumber } from '../lib/money';
 import { getCarProgress, getIncomeStats, getSafeToSpend, suggestPaycheckPlan } from '../lib/calculations';
 import { buildWarnings } from '../lib/audit';
 
-export default function DashboardPage({ data }) {
+export default function DashboardPage({ data, goToPage }) {
   const safe = getSafeToSpend(data);
   const income = getIncomeStats(data.paychecks);
   const carProgress = getCarProgress(data.carLoan);
@@ -28,6 +28,13 @@ export default function DashboardPage({ data }) {
         </div>
         <div className={`status-pill ${safe.pressure}`}>{safe.pressure.toUpperCase()}</div>
       </header>
+
+      <div className="panel quick-actions">
+        <button className="secondary-button" onClick={() => goToPage('transactions')}>+ Transaction</button>
+        <button className="secondary-button" onClick={() => goToPage('paychecks')}>+ Paycheck</button>
+        <button className="secondary-button" onClick={() => goToPage('bills')}>+ Bill</button>
+        <button className="secondary-button" onClick={() => goToPage('car')}>+ Car Payment</button>
+      </div>
 
       {alerts.length > 0 && (
         <div className="warning-grid">
