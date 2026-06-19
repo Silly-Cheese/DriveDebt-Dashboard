@@ -2,6 +2,7 @@ import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
 import { formatMoney, percent, toNumber } from '../lib/money';
 import { getCarProgress, getIncomeStats, getSafeToSpend, suggestPaycheckPlan } from '../lib/calculations';
+import { buildWarnings } from '../lib/audit';
 
 export default function DashboardPage({ data }) {
   const safe = getSafeToSpend(data);
@@ -10,6 +11,7 @@ export default function DashboardPage({ data }) {
   const checking = data.accounts.find((account) => account.id === 'checking') || { balance: 0 };
   const savings = data.accounts.find((account) => account.id === 'savings') || { balance: 0 };
   const totalAccounts = toNumber(checking.balance) + toNumber(savings.balance);
+  const alerts = buildWarnings(data);
   const suggested = suggestPaycheckPlan({
     paycheckAmount: income.lowest || income.average,
     bills: data.bills,
@@ -26,6 +28,17 @@ export default function DashboardPage({ data }) {
         </div>
         <div className={`status-pill ${safe.pressure}`}>{safe.pressure.toUpperCase()}</div>
       </header>
+
+      {alerts.length > 0 && (
+        <div className="warning-grid">
+          {alerts.slice(0, 4).map((item) => (
+            <div className={`warning-card ${item.type}`} key={`${item.title}-${item.message}`}>
+              <strong>{item.title}</strong>
+              <span>{item.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="stat-grid">
         <StatCard label="Checking" value={formatMoney(checking.balance)} hint="Used for Safe To Spend" />
