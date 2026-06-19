@@ -21,8 +21,8 @@ export default function SettingsPage({ uid, data, user, reverifyOwner }) {
       defaultCarPercent: toNumber(defaultCarPercent),
       defaultGoalPercent: toNumber(defaultGoalPercent),
       sessionTimeoutMinutes: toNumber(sessionTimeoutMinutes),
-      ownerEmail: 'christophershelley257@gmail.com',
-      ownerUid: uid,
+      userEmail: user?.email || '',
+      userUid: uid,
       currency: 'USD',
     });
     setSaved(true);
@@ -72,7 +72,7 @@ export default function SettingsPage({ uid, data, user, reverifyOwner }) {
 
       <form className="panel" onSubmit={changePin}>
         <h3>Change Lock PIN</h3>
-        <p className="muted">Changing the lock PIN requires your current PIN and a fresh Google verification popup.</p>
+        <p className="muted">Changing the local lock PIN requires your current PIN and a fresh Google verification popup for the signed-in account.</p>
         <div className="form-grid">
           <label><span>Current PIN</span><input type="password" value={currentPin} onChange={(e) => setCurrentPin(e.target.value)} /></label>
           <label><span>New PIN</span><input type="password" value={newPin} onChange={(e) => setNewPin(e.target.value)} placeholder="4 to 8 digits" /></label>
@@ -83,12 +83,12 @@ export default function SettingsPage({ uid, data, user, reverifyOwner }) {
 
       <div className="panel">
         <h3>Security</h3>
-        <p className="muted">This app is locked to the owner email. Your Firebase UID is shown here so the Firestore rules can be hardened to UID-only after confirming it.</p>
+        <p className="muted">Each signed-in Google account has a private DriveDebt workspace. Firestore rules should allow each user to access only their own /users/{{uid}} data.</p>
         <div className="security-list">
-          <span>Owner Email: {user?.email || 'christophershelley257@gmail.com'}</span>
-          <span>Firebase UID: <code>{uid}</code></span>
+          <span>Signed-in Email: {user?.email || 'Unknown'}</span>
+          <span>Your Firebase UID: <code>{uid}</code></span>
           <span>Authentication: Google Firebase Auth</span>
-          <span>Database: Owner-only Firestore path</span>
+          <span>Database: Per-user Firestore workspace</span>
         </div>
         <button className="secondary-button" onClick={copyUid}>Copy Firebase UID</button>
       </div>
