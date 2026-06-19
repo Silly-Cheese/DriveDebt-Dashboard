@@ -6,6 +6,14 @@ import { formatMoney, percent, toNumber } from '../lib/money';
 import { getCarProgress, getIncomeStats, getSafeToSpend, suggestPaycheckPlan } from '../lib/calculations';
 import { buildWarnings } from '../lib/audit';
 
+function safeLabel(value, fallback = 'Unknown') {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object') return value.name || value.label || value.id || fallback;
+  return fallback;
+}
+
 export default function DashboardPage({ data, goToPage, openQuickAdd }) {
   const safe = getSafeToSpend(data);
   const income = getIncomeStats(data.paychecks);
@@ -43,9 +51,9 @@ export default function DashboardPage({ data, goToPage, openQuickAdd }) {
       {alerts.length > 0 && (
         <div className="warning-grid">
           {alerts.slice(0, 4).map((item) => (
-            <div className={`warning-card ${item.type}`} key={`${item.title}-${item.message}`}>
-              <strong>{item.title}</strong>
-              <span>{item.message}</span>
+            <div className={`warning-card ${safeLabel(item.type, 'warning')}`} key={`${safeLabel(item.title)}-${safeLabel(item.message)}`}>
+              <strong>{safeLabel(item.title)}</strong>
+              <span>{safeLabel(item.message)}</span>
             </div>
           ))}
         </div>
@@ -76,7 +84,7 @@ export default function DashboardPage({ data, goToPage, openQuickAdd }) {
           <h3>Bills Due Soon</h3>
           {safe.upcomingBills.length === 0 ? <p className="muted">No upcoming unpaid bills found.</p> : safe.upcomingBills.map((bill) => (
             <div className="row" key={bill.id}>
-              <span>{bill.name}</span>
+              <span>{safeLabel(bill.name, 'Unnamed bill')}</span>
               <strong>{formatMoney(bill.amount)}</strong>
             </div>
           ))}
@@ -89,8 +97,8 @@ export default function DashboardPage({ data, goToPage, openQuickAdd }) {
           <p className="muted">Based on your lower recent income, upcoming bills, emergency fund, and car payoff priority.</p>
           <div className="allocation-list">
             {suggested.map((item) => (
-              <div className="row" key={item.label}>
-                <span>{item.label}</span>
+              <div className="row" key={safeLabel(item.label)}>
+                <span>{safeLabel(item.label)}</span>
                 <strong>{formatMoney(item.amount)}</strong>
               </div>
             ))}
@@ -103,8 +111,8 @@ export default function DashboardPage({ data, goToPage, openQuickAdd }) {
         <h3>Recent Activity</h3>
         {data.activity.length === 0 ? <p className="muted">No activity has been logged yet.</p> : data.activity.slice(0, 6).map((item) => (
           <div className="row" key={item.id}>
-            <span>{item.action.replaceAll('_', ' ')}</span>
-            <strong>{item.date}</strong>
+            <span>{safeLabel(item.action, 'activity').replaceAll('_', ' ')}</span>
+            <strong>{safeLabel(item.date || item.at, '')}</strong>
           </div>
         ))}
       </div>
