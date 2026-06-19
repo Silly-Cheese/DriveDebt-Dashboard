@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { LockKeyhole } from 'lucide-react';
-
-const DEFAULT_PIN = '2570';
+import { getLocalPin } from '../lib/localSecurity';
 
 export default function LockScreen({ onUnlock }) {
   const [pin, setPin] = useState('');
@@ -9,7 +8,7 @@ export default function LockScreen({ onUnlock }) {
 
   function submit(event) {
     event.preventDefault();
-    if (pin === DEFAULT_PIN) {
+    if (pin === getLocalPin()) {
       onUnlock();
       setPin('');
       setError('');
