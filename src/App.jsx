@@ -1,16 +1,12 @@
 import { useState } from 'react';
 import Layout from './components/Layout';
 import LockScreen from './components/LockScreen';
+import QuickAddModal from './components/QuickAddModal';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import AccountsPage from './pages/AccountsPage';
-import PaychecksPage from './pages/PaychecksPage';
-import BudgetPage from './pages/BudgetPage';
+import MoneyPage from './pages/MoneyPage';
 import BillsPage from './pages/BillsPage';
 import CarPayoffPage from './pages/CarPayoffPage';
-import GoalsPage from './pages/GoalsPage';
-import TransactionsPage from './pages/TransactionsPage';
-import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './hooks/useAuth';
 import { useFinanceData } from './hooks/useFinanceData';
@@ -18,6 +14,7 @@ import { useFinanceData } from './hooks/useFinanceData';
 export default function App() {
   const [activePage, setActivePage] = useState('dashboard');
   const [locked, setLocked] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const { user, loading, error, login, loginWithRedirect, reverifyOwner, logout } = useAuth();
   const data = useFinanceData(user?.uid);
 
@@ -28,21 +25,26 @@ export default function App() {
 
   const props = { uid: user.uid, data };
   const pages = {
-    dashboard: <DashboardPage data={data} goToPage={setActivePage} />,
-    accounts: <AccountsPage {...props} />,
-    paychecks: <PaychecksPage {...props} />,
-    budget: <BudgetPage {...props} />,
+    dashboard: <DashboardPage data={data} goToPage={setActivePage} openQuickAdd={() => setQuickAddOpen(true)} />,
+    money: <MoneyPage {...props} />,
     bills: <BillsPage {...props} />,
     car: <CarPayoffPage {...props} />,
-    goals: <GoalsPage {...props} />,
-    transactions: <TransactionsPage {...props} />,
-    reports: <ReportsPage data={data} />,
     settings: <SettingsPage {...props} user={user} reverifyOwner={reverifyOwner} />,
   };
 
   return (
-    <Layout user={user} activePage={activePage} setActivePage={setActivePage} logout={logout} lockDashboard={() => setLocked(true)}>
-      {pages[activePage] || pages.dashboard}
-    </Layout>
+    <>
+      <Layout
+        user={user}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        logout={logout}
+        lockDashboard={() => setLocked(true)}
+        openQuickAdd={() => setQuickAddOpen(true)}
+      >
+        {pages[activePage] || pages.dashboard}
+      </Layout>
+      <QuickAddModal uid={user.uid} data={data} open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
+    </>
   );
 }
