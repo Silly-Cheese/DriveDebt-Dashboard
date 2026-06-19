@@ -1,10 +1,12 @@
 import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
+import SetupChecklist from '../components/SetupChecklist';
+import DataHealthPanel from '../components/DataHealthPanel';
 import { formatMoney, percent, toNumber } from '../lib/money';
 import { getCarProgress, getIncomeStats, getSafeToSpend, suggestPaycheckPlan } from '../lib/calculations';
 import { buildWarnings } from '../lib/audit';
 
-export default function DashboardPage({ data, goToPage }) {
+export default function DashboardPage({ data, goToPage, openQuickAdd }) {
   const safe = getSafeToSpend(data);
   const income = getIncomeStats(data.paychecks);
   const carProgress = getCarProgress(data.carLoan);
@@ -24,17 +26,19 @@ export default function DashboardPage({ data, goToPage }) {
       <header className="page-header">
         <div>
           <p className="eyebrow">Command Center</p>
-          <h2>Financial Dashboard</h2>
+          <h2>Today’s Money Snapshot</h2>
         </div>
         <div className={`status-pill ${safe.pressure}`}>{safe.pressure.toUpperCase()}</div>
       </header>
 
       <div className="panel quick-actions">
-        <button className="secondary-button" onClick={() => goToPage('transactions')}>+ Transaction</button>
-        <button className="secondary-button" onClick={() => goToPage('paychecks')}>+ Paycheck</button>
-        <button className="secondary-button" onClick={() => goToPage('bills')}>+ Bill</button>
-        <button className="secondary-button" onClick={() => goToPage('car')}>+ Car Payment</button>
+        <button className="primary-button" onClick={openQuickAdd}>+ Quick Add</button>
+        <button className="secondary-button" onClick={() => goToPage('money')}>Money Center</button>
+        <button className="secondary-button" onClick={() => goToPage('bills')}>Bills</button>
+        <button className="secondary-button" onClick={() => goToPage('car')}>Car</button>
       </div>
+
+      <SetupChecklist data={data} goToPage={goToPage} />
 
       {alerts.length > 0 && (
         <div className="warning-grid">
@@ -79,17 +83,30 @@ export default function DashboardPage({ data, goToPage }) {
         </div>
       </div>
 
-      <div className="panel">
-        <h3>Recommended Paycheck Split</h3>
-        <p className="muted">Based on your lower recent income, upcoming bills, emergency fund, and car payoff priority.</p>
-        <div className="allocation-list">
-          {suggested.map((item) => (
-            <div className="row" key={item.label}>
-              <span>{item.label}</span>
-              <strong>{formatMoney(item.amount)}</strong>
-            </div>
-          ))}
+      <div className="two-column">
+        <div className="panel">
+          <h3>Recommended Paycheck Split</h3>
+          <p className="muted">Based on your lower recent income, upcoming bills, emergency fund, and car payoff priority.</p>
+          <div className="allocation-list">
+            {suggested.map((item) => (
+              <div className="row" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{formatMoney(item.amount)}</strong>
+              </div>
+            ))}
+          </div>
         </div>
+        <DataHealthPanel data={data} />
+      </div>
+
+      <div className="panel">
+        <h3>Recent Activity</h3>
+        {data.activity.length === 0 ? <p className="muted">No activity has been logged yet.</p> : data.activity.slice(0, 6).map((item) => (
+          <div className="row" key={item.id}>
+            <span>{item.action.replaceAll('_', ' ')}</span>
+            <strong>{item.date}</strong>
+          </div>
+        ))}
       </div>
     </section>
   );
