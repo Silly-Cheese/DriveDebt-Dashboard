@@ -9,6 +9,8 @@ const nav = [
 ];
 
 export default function Layout({ user, activePage, setActivePage, logout, lockDashboard, openQuickAdd, children }) {
+  const userLabel = user?.email || user?.displayName || user?.uid || 'Signed in';
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -39,7 +41,7 @@ export default function Layout({ user, activePage, setActivePage, logout, lockDa
         </nav>
 
         <div className="sidebar-footer">
-          <p>{user.email}</p>
+          <p>{String(userLabel)}</p>
           <button className="ghost-button" onClick={lockDashboard}><Lock size={16} /> Lock</button>
           <button className="ghost-button" onClick={logout}><LogOut size={16} /> Sign out</button>
         </div>
