@@ -1,5 +1,7 @@
 import MoneyForm from '../components/MoneyForm';
-import { createRecord, deleteRecord, saveKnownRecord } from '../lib/firestoreService';
+import SafeActionButton from '../components/SafeActionButton';
+import { createRecord, deleteRecord } from '../lib/firestoreService';
+import { payBill } from '../lib/moneyEngine';
 import { billCategories } from '../lib/categories';
 import { formatMoney, toNumber } from '../lib/money';
 
@@ -16,10 +18,7 @@ export default function BillsPage({ uid, data }) {
   }
 
   async function markPaid(bill) {
-    await saveKnownRecord(uid, 'bills', bill.id, {
-      status: 'paid',
-      paidAt: new Date().toISOString().slice(0, 10),
-    });
+    await payBill(uid, data, bill, 'checking');
   }
 
   return (
@@ -44,13 +43,13 @@ export default function BillsPage({ uid, data }) {
       />
       <div className="panel">
         <h3>Bill List</h3>
-        {data.bills.length === 0 ? <p className="muted">No bills yet.</p> : data.bills.map((bill) => (
+        {data.bills.length === 0 ? <p className="muted">No bills yet. Add phone, insurance, subscriptions, or car-related bills so Safe To Spend can stay accurate.</p> : data.bills.map((bill) => (
           <div className={`row status-row ${bill.status}`} key={bill.id}>
             <span>{bill.dueDate} • {bill.name} • {bill.frequency} • {bill.status}</span>
             <strong>{formatMoney(bill.amount)}</strong>
             <div className="row-actions">
-              {bill.status !== 'paid' && <button className="mini-button" onClick={() => markPaid(bill)}>Mark Paid</button>}
-              <button className="mini-button danger-button" onClick={() => deleteRecord(uid, 'bills', bill.id)}>Delete</button>
+              {bill.status !== 'paid' && <button className="mini-button" onClick={() => markPaid(bill)}>Pay from Checking</button>}
+              <SafeActionButton promptText="Delete this bill?" onAction={() => deleteRecord(uid, 'bills', bill.id)}>Delete</SafeActionButton>
             </div>
           </div>
         ))}
