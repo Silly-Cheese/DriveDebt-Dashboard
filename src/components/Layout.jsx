@@ -1,43 +1,14 @@
-import { Car, CreditCard, Gauge, Home, Landmark, Lock, LogOut, PiggyBank, ReceiptText, Settings, Target, WalletCards, Wallet } from 'lucide-react';
+import { Car, Home, Landmark, Lock, LogOut, PiggyBank, ReceiptText, Settings } from 'lucide-react';
 
-const coreNav = [
+const nav = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
-  { id: 'accounts', label: 'Accounts', icon: Landmark },
-  { id: 'paychecks', label: 'Paychecks', icon: WalletCards },
-  { id: 'budget', label: 'Budget', icon: Wallet },
+  { id: 'money', label: 'Money', icon: Landmark },
   { id: 'bills', label: 'Bills', icon: ReceiptText },
-  { id: 'car', label: 'Car Payoff', icon: Car },
-];
-
-const advancedNav = [
-  { id: 'goals', label: 'Goals', icon: Target },
-  { id: 'transactions', label: 'Ledger', icon: CreditCard },
-  { id: 'reports', label: 'Reports', icon: Gauge },
+  { id: 'car', label: 'Car', icon: Car },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-function NavSection({ title, items, activePage, setActivePage }) {
-  return (
-    <div className="nav-section">
-      <p className="nav-heading">{title}</p>
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <button
-            key={item.id}
-            className={activePage === item.id ? 'nav-item active' : 'nav-item'}
-            onClick={() => setActivePage(item.id)}
-          >
-            <Icon size={18} />
-            {item.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export default function Layout({ user, activePage, setActivePage, logout, lockDashboard, children }) {
+export default function Layout({ user, activePage, setActivePage, logout, lockDashboard, openQuickAdd, children }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -49,9 +20,22 @@ export default function Layout({ user, activePage, setActivePage, logout, lockDa
           </div>
         </div>
 
-        <nav className="nav-list">
-          <NavSection title="Core" items={coreNav} activePage={activePage} setActivePage={setActivePage} />
-          <NavSection title="Advanced" items={advancedNav} activePage={activePage} setActivePage={setActivePage} />
+        <button className="primary-button wide sidebar-add" onClick={openQuickAdd}>+ Quick Add</button>
+
+        <nav className="nav-list clean-nav">
+          {nav.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                className={activePage === item.id ? 'nav-item active' : 'nav-item'}
+                onClick={() => setActivePage(item.id)}
+              >
+                <Icon size={18} />
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
