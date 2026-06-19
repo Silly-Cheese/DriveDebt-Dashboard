@@ -3,7 +3,7 @@ import { saveKnownRecord } from '../lib/firestoreService';
 import { exportJson, exportTransactionsCsv } from '../lib/exportData';
 import { toNumber } from '../lib/money';
 
-export default function SettingsPage({ uid, data }) {
+export default function SettingsPage({ uid, data, user }) {
   const [emergencyFundTarget, setEmergencyFundTarget] = useState('1000');
   const [defaultCarPercent, setDefaultCarPercent] = useState('25');
   const [defaultGoalPercent, setDefaultGoalPercent] = useState('10');
@@ -18,10 +18,15 @@ export default function SettingsPage({ uid, data }) {
       defaultGoalPercent: toNumber(defaultGoalPercent),
       sessionTimeoutMinutes: toNumber(sessionTimeoutMinutes),
       ownerEmail: 'christophershelley257@gmail.com',
+      ownerUid: uid,
       currency: 'USD',
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  }
+
+  async function copyUid() {
+    await navigator.clipboard.writeText(uid);
   }
 
   return (
@@ -40,12 +45,14 @@ export default function SettingsPage({ uid, data }) {
       </form>
       <div className="panel">
         <h3>Security</h3>
-        <p className="muted">This app is locked to the owner email and Firestore security rules also restrict data to the signed-in owner UID.</p>
+        <p className="muted">This app is locked to the owner email. Your Firebase UID is shown here so the Firestore rules can be hardened to UID-only after confirming it.</p>
         <div className="security-list">
-          <span>Owner Email: christophershelley257@gmail.com</span>
+          <span>Owner Email: {user?.email || 'christophershelley257@gmail.com'}</span>
+          <span>Firebase UID: <code>{uid}</code></span>
           <span>Authentication: Google Firebase Auth</span>
           <span>Database: Owner-only Firestore path</span>
         </div>
+        <button className="secondary-button" onClick={copyUid}>Copy Firebase UID</button>
       </div>
       <div className="panel button-row">
         <button className="secondary-button" onClick={() => exportJson(data)}>Download Full JSON Backup</button>
